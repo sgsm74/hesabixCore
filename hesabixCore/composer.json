@@ -101,7 +101,7 @@
       "require": "7.1.*",
       "docker": true
     },
-    "public-dir": "../public_html"
+    "public-dir": "/public/"
   },
   "require-dev": {
     "phpunit/phpunit": "^9.5",
