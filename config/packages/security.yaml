@@ -14,7 +14,7 @@ security:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
         main:
-            stateless: true
+            stateless: false
             lazy: true
             provider: app_user_provider
             json_login:
