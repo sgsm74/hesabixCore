@@ -29,8 +29,8 @@ use Symfony\Component\Security\Http\Authentication\UserAuthenticatorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 use SymfonyCasts\Bundle\VerifyEmail\Exception\VerifyEmailExceptionInterface;
 use Symfony\Component\EventDispatcher\EventDispatcher,
-    Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken,
-    Symfony\Component\Security\Http\Event\InteractiveLoginEvent;
+Symfony\Component\Security\Core\Authentication\Token\UsernamePasswordToken,
+Symfony\Component\Security\Http\Event\InteractiveLoginEvent;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
 
 class UserController extends AbstractController
@@ -48,22 +48,22 @@ class UserController extends AbstractController
      */
     private function RandomString(int $length = 32): string
     {
-        return substr(str_shuffle(str_repeat($x='0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length/strlen($x)) )),1,$length);
+        return substr(str_shuffle(str_repeat($x = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ', ceil($length / strlen($x)))), 1, $length);
     }
 
     #[Route('/login/{msg}', name: 'front_user_login')]
-    public function front_user_login(AuthenticationUtils $authenticationUtils, #[CurrentUser] ?User $user,EntityManagerInterface $entityManager,$msg = null): Response
+    public function front_user_login(AuthenticationUtils $authenticationUtils, #[CurrentUser] ?User $user, EntityManagerInterface $entityManager, $msg = null): Response
     {
-        if($user)
+        if ($user)
             return $this->redirectToRoute('general_home');
         $error = $authenticationUtils->getLastAuthenticationError();
 
         // last username entered by the user
         $lastUsername = $authenticationUtils->getLastUsername();
-        return $this->render("/user/login.html.twig",[
-        'last_username' => $lastUsername,
-        'error'         => $error,
-            'msg'=>$msg
+        return $this->render("/user/login.html.twig", [
+            'last_username' => $lastUsername,
+            'error' => $error,
+            'msg' => $msg
         ]);
     }
 
@@ -78,21 +78,20 @@ class UserController extends AbstractController
     }
 
     #[Route('/register', name: 'front_user_register')]
-    public function front_user_register(twigFunctions $functions,Request $request,TranslatorInterface $translator, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager): Response
+    public function front_user_register(twigFunctions $functions, Request $request, TranslatorInterface $translator, UserPasswordHasherInterface $userPasswordHasher, EntityManagerInterface $entityManager): Response
     {
         //redirect to hesabix app register page
-        return $this->redirect($functions->systemSettings()->getAppSite() . '/user/register');
+        //return $this->redirect($functions->systemSettings()->getAppSite() . '/user/register');
         $user = new User();
         $form = $this->createForm(UserRegisterType::class, $user);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            $exist = $entityManager->getRepository(User::class)->findOneBy(['email'=>$form->get('email')->getData()]);
-            if($exist){
+            $exist = $entityManager->getRepository(User::class)->findOneBy(['email' => $form->get('email')->getData()]);
+            if ($exist) {
                 $error = new FormError($translator->trans('There is already an account with this email'));
                 $form->get('email')->addError($error);
 
-            }
-            else{
+            } else {
                 $user->setDateRegister(time());
                 // encode the plain password
                 $user->setPassword(
@@ -106,7 +105,9 @@ class UserController extends AbstractController
                 $entityManager->flush();
 
                 // generate a signed url and email it to the user
-                $this->emailVerifier->sendEmailConfirmation('app_verify_email', $user,
+                $this->emailVerifier->sendEmailConfirmation(
+                    'app_verify_email',
+                    $user,
                     (new TemplatedEmail())
                         ->from(new Address('noreplay@hesabix.ir', 'حسابیکس'))
                         ->to($user->getEmail())
@@ -114,7 +115,7 @@ class UserController extends AbstractController
                         ->htmlTemplate('user/confirmation_email.html.twig')
                 );
                 // do anything else you need here, like send an email
-                return $this->redirectToRoute('front_user_login',['msg'=>'success']);
+                return $this->redirectToRoute('front_user_login', ['msg' => 'success']);
 
             }
 
@@ -151,13 +152,13 @@ class UserController extends AbstractController
         return $this->redirectToRoute('app_register');
     }
 
-    #[Route('/login/by/token{route}', name: 'app_login_by_token' , requirements: ['route' => '.+'])]
-    public function app_login_by_token(string $route,AuthenticationUtils $authenticationUtils,twigFunctions $functions,Request $request, UserPasswordHasherInterface $userPasswordHasher, UserAuthenticatorInterface $userAuthenticator, BackAuthAuthenticator $authenticator, EntityManagerInterface $entityManager): Response
+    #[Route('/login/by/token{route}', name: 'app_login_by_token', requirements: ['route' => '.+'])]
+    public function app_login_by_token(string $route, AuthenticationUtils $authenticationUtils, twigFunctions $functions, Request $request, UserPasswordHasherInterface $userPasswordHasher, UserAuthenticatorInterface $userAuthenticator, BackAuthAuthenticator $authenticator, EntityManagerInterface $entityManager): Response
     {
-        $token = $entityManager->getRepository(UserToken::class)->findOneBy(['tokenID'=>$request->get('tokenID')]);
-        if(!$token){
-            $token = $entityManager->getRepository(UserToken::class)->findOneBy(['token'=>$request->get('tokenID')]);
-            if(!$token)
+        $token = $entityManager->getRepository(UserToken::class)->findOneBy(['tokenID' => $request->get('tokenID')]);
+        if (!$token) {
+            $token = $entityManager->getRepository(UserToken::class)->findOneBy(['token' => $request->get('tokenID')]);
+            if (!$token)
                 throw $this->createNotFoundException('توکن معتبر نیست');
         }
 
@@ -172,12 +173,13 @@ class UserController extends AbstractController
     /**
      * @throws Exception
      */
-    #[Route('/logout/by/token{route}', name: 'app_logout_by_token' , requirements: ['route' => '.+'])]
-    public function app_logout_by_token(string $route,twigFunctions $functions,Request $request,Security $security, EntityManagerInterface $entityManager): Response
+    #[Route('/logout/by/token{route}', name: 'app_logout_by_token', requirements: ['route' => '.+'])]
+    public function app_logout_by_token(string $route, twigFunctions $functions, Request $request, Security $security, EntityManagerInterface $entityManager): Response
     {
         try {
             $security->logout(false);
-        } catch (Exception $e){}
-       return $this->redirect($functions->systemSettings()->getAppSite() . $route);
+        } catch (Exception $e) {
+        }
+        return $this->redirect($functions->systemSettings()->getAppSite() . $route);
     }
 }
